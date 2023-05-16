@@ -1,21 +1,29 @@
 #include<stdio.h>
 #define MAX 15
 
-
+// Pre-defined
 void drawBoard(int matris[][MAX], int N);
 void readFromFile(int matris[][MAX], char *fileName);
 
+// Game
+void matrixAnalysis(int matrixRaw[][MAX], int numberLocations[][5], int N);
+
+// General matrix IO
+void matrixPrint(int m[MAX][MAX], int h, int w);
+
+
 int main()
 {
-	int numberLocations[MAX][5]={{0}}, matrixGhost[MAX][MAX]={{0}};
-	int i, j, matrixRaw[MAX][MAX]={{0}}; 
-    	int N = 5; 
+	int numberLocations[MAX][MAX] = {{0}}, matrixGhost[MAX][MAX] = {{0}};
+	int i, j, matrixRaw[MAX][MAX] = {{0}}; 
+    int N = 5; 
 	char fileName[200] = "./TestVerileri/5x5.txt";	
 
 	readFromFile(matrixRaw, fileName);
 	drawBoard(matrixRaw, N);
 	
 	matrixAnalysis(matrixRaw, numberLocations, N);
+	
 	
 	
 	return 0;
@@ -51,7 +59,7 @@ void drawBoard(int matris[][MAX], int N){
     }
 }
 
-void matrixAnalysis(int matrixRaw[][MAX], int numberLocations[][4], int N)
+void matrixAnalysis(int matrixRaw[][MAX], int numberLocations[][5], int N)
 {
 	int i, j, num;
 
@@ -72,3 +80,15 @@ void matrixAnalysis(int matrixRaw[][MAX], int numberLocations[][4], int N)
 	}
 }
 					
+void matrixPrint(int m[MAX][MAX], int h, int w) 
+{
+	int i, j;
+
+	for (i = 0; i < h; i++) {
+		for (j = 0; j < w; j++) {
+			printf("%d ", m[i][j]);
+		}
+		printf("\n");
+	}
+
+}

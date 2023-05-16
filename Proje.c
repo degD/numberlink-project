@@ -6,7 +6,7 @@ void drawBoard(int matris[][MAX], int N);
 void readFromFile(int matris[][MAX], char *fileName);
 
 // Game
-void matrixAnalysis(int matrixRaw[][MAX], int numberLocations[][5], int N);
+void matrixAnalysis(int matrixRaw[][MAX], int numberLocations[][MAX], int N);
 
 // General matrix IO
 void matrixPrint(int m[MAX][MAX], int h, int w);
@@ -22,9 +22,15 @@ int main()
 	readFromFile(matrixRaw, fileName);
 	drawBoard(matrixRaw, N);
 	
+	// Working
 	matrixAnalysis(matrixRaw, numberLocations, N);
-	
-	
+	matrixPrint(numberLocations, N, 5);
+
+	// Manual game loop
+	do 
+	{
+		
+	}
 	
 	return 0;
 }
@@ -47,19 +53,24 @@ void readFromFile(int matris[][MAX], char *fileName){
 void drawBoard(int matris[][MAX], int N){
     int i,j,k;
     for(i=0;i<N;i++){
-        printf("\n");
+        printf("\n  ");
         for (k=0;k<N;k++)
             printf("-------");
-        printf("\n");
+        printf("\n%d  ", i);
         for(j=0;j<N;j++)
             if (matris[i][j]!=0)
                 printf("  %d   |",matris[i][j]);
             else
                  printf("      |",matris[i][j]);
     }
+    printf("\n  ");
+    for(i=0;i<N;i++)
+        printf("  %d    ", i);
+    puts("");
 }
 
-void matrixAnalysis(int matrixRaw[][MAX], int numberLocations[][5], int N)
+
+void matrixAnalysis(int matrixRaw[][MAX], int numberLocations[][MAX], int N)
 {
 	int i, j, num;
 

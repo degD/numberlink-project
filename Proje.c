@@ -27,10 +27,7 @@ int main()
 	matrixPrint(numberLocations, N, 5);
 
 	// Manual game loop
-	do 
-	{
-		
-	}
+
 	
 	return 0;
 }

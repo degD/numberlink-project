@@ -3,7 +3,7 @@
 
 // Pre-defined
 void drawBoard(int matris[][MAX], int N);
-void readFromFile(int matris[][MAX], char *fileName);
+int readFromFile(int matris[][MAX], char *fileName);
 
 // Game
 void matrixAnalysis(int matrix[][MAX], int numberLocations[][MAX], int N);
@@ -12,6 +12,23 @@ int boundaryCheck(int i0, int j0, int N);
 
 // General matrix IO
 void matrixPrint(int m[MAX][MAX], int h, int w);
+
+void moveUndo(int matrix[][MAX], int numberLocations[][MAX], int listMoves[][MAX], int *movesIndex, int N);
+void gameLoopManual(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, int listMoves[][MAX], int N);
+void manualMove(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, int listMoves[][MAX], int N);
+void waitForEnter();
+void clearScreen();
+int connectedCheck(int num, int numberLocations[][MAX]);
+void saveMove(int i0, int j0, int i1, int j1, int num, int numberLocations[][MAX], int listMoves[][MAX], int *movesIndex, int N);
+void drawLine(int matrix[][MAX], int num, int i0, int j0, int i1, int j1, int N);
+int testLine(int matrix[][MAX], int i0, int j0, int i1, int j1, int numberLocations[][MAX], int N);
+void lineDirection(int i0, int j0, int i1, int j1, int dirArr[2]);
+void possibleHeadsPrint(int numberLocations[][MAX], int N);
+int selectionHeadCheck(int matrix[][MAX], int i0, int j0, int numberLocations[][MAX], int N);
+int isTargetValid(int matrix[][MAX], int i0, int j0, int i1, int j1, int N);
+int boundaryCheck(int i0, int j0, int N);
+
+
 
 
 int main()
@@ -27,42 +44,44 @@ int main()
 
 	// Game	
 	matrixAnalysis(matrix, numberLocations, N);
-	
-	printf("Move(m), Undo(u), Exit(e): ");
-	scanf(" %c", &c);
-	switch (c)
-	{
-		case 'M': case 'm':
-
-			break;
-
-		case 'U': case 'u':
-			break;
-
-		case 'E': case 'e':
-			break;
-
-		default:
-			break;
-
-	}
+	gameLoopManual(matrix, numberLocations, &movesIndex, listMoves, N);
+//	
+//	printf("Move(m), Undo(u), Exit(e): ");
+//	scanf(" %c", &c);
+//	switch (c)
+//	{
+//		case 'M': case 'm':
+//			
+//			break;
+//
+//		case 'U': case 'u':
+//			break;
+//
+//		case 'E': case 'e':
+//			break;
+//
+//		default:
+//			break;
+//
+//	}
 
 	
 	return 0;
 }
 
-void readFromFile(int matris[][MAX], char *fileName){
-	int i,j, temp;
+int readFromFile(int matris[][MAX], char *fileName){
+	int i, j, temp;
 	FILE *data = fopen(fileName,"r");
 	if(!data){
-        printf("Dosya Acilamadi!");
-		return;
+        printf("Failed to open file!");
+		return 0;
     }
     while(!feof(data)){
-
+        fscanf(data,"%d %d %d\n",&i,&j,&temp);  
 		matris[i][j]=temp; 
     }  
   	fclose(data); 
+    return 1;
    // Buraya kadar olan bolumde dosyadan okuma yapiliyor. Kodu degistirmeyiniz.
 }
 
@@ -135,7 +154,7 @@ int boundaryCheck(int i0, int j0, int N)
 // Is the head and the selection on the same line (direction) and also inside the matrix?
 int isTargetValid(int matrix[][MAX], int i0, int j0, int i1, int j1, int N)
 {
-	if ( boundaryCheck(matrix, i0, j0, N) && boundaryCheck(matrix, i1, j1, N) )
+	if ( boundaryCheck(i0, j0, N) && boundaryCheck(i1, j1, N) )
 	{
 		if (i0 == i1 && j0 == j1) return 0;
 		if (i0 == i1 || j0 == j1) {
@@ -149,7 +168,7 @@ int isTargetValid(int matrix[][MAX], int i0, int j0, int i1, int j1, int N)
 int selectionHeadCheck(int matrix[][MAX], int i0, int j0, int numberLocations[][MAX], int N)
 {
 	int n;
-	if (boundaryCheck(i0, j0, N)) return 0;
+	if (boundaryCheck(i0, j0, N) == 0) return 0;
 	if (matrix[i0][j0] == 0) return 0;
 	else {
 		n = matrix[i0][j0];
@@ -162,7 +181,7 @@ int selectionHeadCheck(int matrix[][MAX], int i0, int j0, int numberLocations[][
 void possibleHeadsPrint(int numberLocations[][MAX], int N)
 {
 	int i;
-	for (i = 0; i < N; i++) {
+	for (i = 1; i < N; i++) {
 		if (numberLocations[i-1][4] == 1) {
 			printf("%3d is not connected...\n", i);
 		} else {
@@ -206,18 +225,21 @@ int testLine(int matrix[][MAX], int i0, int j0, int i1, int j1, int numberLocati
 		j += dir[1];
 		if (matrix[i][j] != 0) isObstacle++;
 	} 
-	while (i != i1 && j != j1);
+	while (!(i == i1 && j == j1));
 	
 	// "End" number may also got counted as an obstacle. 
-	if (isObstacle > 1) return 0;
-	if (matrix[i][j] != num) return 0;
-	return 1;
+	if (isObstacle == 0)
+		return 1;
+	else if (isObstacle == 1 && matrix[i][j] == num)
+		return 1;
+	else 
+		return 0;
 }
 
 // Draws a line between two cells.
 void drawLine(int matrix[][MAX], int num, int i0, int j0, int i1, int j1, int N)
 {
-	int i, j, num, dir[2];
+	int i, j, dir[2];
 
 	lineDirection(i0, j0, i1, j1, dir);
 	i = i0;
@@ -227,7 +249,7 @@ void drawLine(int matrix[][MAX], int num, int i0, int j0, int i1, int j1, int N)
 		j += dir[1];
 		matrix[i][j] = num;
 	} 
-	while (i != i1 && j != j1);
+	while (!(i == i1 && j == j1));
 }
 
 // Saves movement information. 
@@ -252,7 +274,7 @@ int connectedCheck(int num, int numberLocations[][MAX])
 	return 1;
 }
 
-void clearScreen()
+void clearScreen() 
 {
 	int i;
 	for (i = 0; i < 50; i++) 
@@ -270,7 +292,6 @@ void manualMove(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, 
 	int num, i0, j0, i1, j1;
 	int isValid, se;
 
-	drawBoard(matrix, N);
 	printf("MOVE...\n\n");
 	printf("Numbers...\n");
 	possibleHeadsPrint(numberLocations, N);
@@ -306,7 +327,7 @@ void manualMove(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, 
 			printf("Enter column index: ");
 			scanf("%d", &j1);
 
-			isValid = isTargetValid(matrix, i0, j0, i1, j1, N) && testLine(matrix, i0, j0, i1, j1, numberLocations, N);
+			isValid = testLine(matrix, i0, j0, i1, j1, numberLocations, N);
 			if (isValid == 0) {
 				printf("Target selection is not valid. Press Enter and try again...\n");
 				waitForEnter();
@@ -321,17 +342,22 @@ void manualMove(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, 
 		j0 = j1;
 
 		// Check for number connections
-		if(connectedCheck(num, numberLocations)) {
+		if (connectedCheck(num, numberLocations)) {
 			printf("Numbers connected!\n");
 			numberLocations[num-1][4] = 0;
 			se = 1;
+			waitForEnter();
 		} 
 		else {
+			drawBoard(matrix, N);
 			do {
-				printf("Press \"0\" to select another target from the current position.\nPress \"1\" to exit.\n");
+				printf("Press \"0\" to select another target from the current position.\nPress \"1\" to exit and undo.\n");
 				printf("Selection: ");
 				scanf("%d", &se);
 			} while (se != 0 && se != 1);
+			if (se == 1) {
+				moveUndo(matrix, numberLocations, listMoves, movesIndex, N);
+			}
 		}
 	} while (se != 1);
 }
@@ -343,6 +369,7 @@ void gameLoopManual(int matrix[][MAX], int numberLocations[][MAX], int *movesInd
 	do {
 		// Operation selection
 		clearScreen();
+		drawBoard(matrix, N);
 		do {
 			printf("0 -> Move\n1 -> Undo\n2 -> Exit\nSelection: ");
 			scanf("%d", &se);
@@ -355,7 +382,7 @@ void gameLoopManual(int matrix[][MAX], int numberLocations[][MAX], int *movesInd
 				break;
 
 			case 1:
-				if (*movesIndex < 0) {
+				if (*movesIndex == 0) {
 					printf("No moves have made. Unable to undo. Press Enter to continue...");
 					waitForEnter();
 				} else {
@@ -363,13 +390,14 @@ void gameLoopManual(int matrix[][MAX], int numberLocations[][MAX], int *movesInd
 					printf("Undo complete...");
 					waitForEnter();
 				}
+				break;
 
 			case 2: 
 				printf("Press Enter to return to the menu...");
 				waitForEnter();
 				break;
 		}
-	}
+	} while (se != 2);
 }	
 
 void moveUndo(int matrix[][MAX], int numberLocations[][MAX], int listMoves[][MAX], int *movesIndex, int N)
@@ -389,6 +417,7 @@ void moveUndo(int matrix[][MAX], int numberLocations[][MAX], int listMoves[][MAX
 
 	drawLine(matrix, 0, i1, j1, i0, j0, N);
 	matrix[i0][j0] = num;
+	matrix[i1][j1] = 0;
 }
 	
 	

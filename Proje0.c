@@ -293,7 +293,7 @@ int unitMove(int location[2], char direction)
 }
 
 /*
-Not on board -> 0
+Not on board -> -1
 On board, occupied -> -1
 Free -> 1
 */

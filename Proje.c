@@ -215,11 +215,10 @@ int testLine(int matrix[][MAX], int i0, int j0, int i1, int j1, int numberLocati
 }
 
 // Draws a line between two cells.
-void drawLine(int matrix[][MAX], int i0, int j0, int i1, int j1, int N)
+void drawLine(int matrix[][MAX], int num, int i0, int j0, int i1, int j1, int N)
 {
 	int i, j, num, dir[2];
 
-	num = matrix[i0][j0];
 	lineDirection(i0, j0, i1, j1, dir);
 	i = i0;
 	j = j0;
@@ -316,7 +315,7 @@ void manualMove(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, 
 		clearScreen();
 
 		// Draw the line and save
-		drawLine(matrix, i0, j0, i1, j1, N); 
+		drawLine(matrix, num, i0, j0, i1, j1, N); 
 		saveMove(i0, j0, i1, j1, num, numberLocations, listMoves, movesIndex, N);
 		i0 = i1;
 		j0 = j1;
@@ -356,7 +355,40 @@ void gameLoopManual(int matrix[][MAX], int numberLocations[][MAX], int *movesInd
 				break;
 
 			case 1:
+				if (*movesIndex < 0) {
+					printf("No moves have made. Unable to undo. Press Enter to continue...");
+					waitForEnter();
+				} else {
+					moveUndo(matrix, numberLocations, listMoves, movesIndex, N);
+					printf("Undo complete...");
+					waitForEnter();
+				}
 
-			case 2:
-		}	
+			case 2: 
+				printf("Press Enter to return to the menu...");
+				waitForEnter();
+				break;
+		}
+	}
+}	
+
+void moveUndo(int matrix[][MAX], int numberLocations[][MAX], int listMoves[][MAX], int *movesIndex, int N)
+{
+	int i0, j0, i1, j1, num;
+
+	i0 = listMoves[*movesIndex][0];
+	j0 = listMoves[*movesIndex][1];
+	i1 = listMoves[*movesIndex][2];
+	j1 = listMoves[*movesIndex][3];
+	num = listMoves[*movesIndex][4];
+	*movesIndex--;
+
+	numberLocations[num-1][0] = i0;
+	numberLocations[num-1][1] = j0;
+	numberLocations[num-1][4] = 1;
+
+	drawLine(matrix, 0, i1, j1, i0, j0, N);
+	matrix[i0][j0] = num;
+}
+	
 	

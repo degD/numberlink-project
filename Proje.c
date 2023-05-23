@@ -181,7 +181,7 @@ int selectionHeadCheck(int matrix[][MAX], int i0, int j0, int numberLocations[][
 void possibleHeadsPrint(int numberLocations[][MAX], int N)
 {
 	int i;
-	for (i = 1; i < N; i++) {
+	for (i = 1; i <= N; i++) {
 		if (numberLocations[i-1][4] == 1) {
 			printf("%3d is not connected...\n", i);
 		} else {
@@ -276,9 +276,7 @@ int connectedCheck(int num, int numberLocations[][MAX])
 
 void clearScreen() 
 {
-	int i;
-	for (i = 0; i < 50; i++) 
-		puts(""); // TODO: DOES DEV-C++ REALLY DO NOT SUPPORT ANSI??
+	printf("\e[;H\e[J");
 }
 
 void waitForEnter()
@@ -292,15 +290,19 @@ void manualMove(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, 
 	int num, i0, j0, i1, j1;
 	int isValid, se;
 
-	printf("MOVE...\n\n");
+	clearScreen();
 	printf("Numbers...\n");
 	possibleHeadsPrint(numberLocations, N);
-	puts("");
+	printf("Press Enter to continue...");
+	waitForEnter();
+	clearScreen();
 
 	// TODO: MAY THERE BE A REASON FOR EXITING ALONG THE MOVE??
 
 	// Selecting a head
 	do {
+		clearScreen();
+		drawBoard(matrix, N);
 		printf("Head...\n");
 		printf("Enter row index: ");
 		scanf("%d", &i0);
@@ -314,11 +316,11 @@ void manualMove(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, 
 			waitForEnter();
 		}
 	} while(isValid == 0);
-	clearScreen();
 
 	num = matrix[i0][j0];
 	do {
 		// Selecting a target 
+		clearScreen();
 		drawBoard(matrix, N);
 		do {
 			printf("Target from [%3d,%3d]...\n", i0, j0);
@@ -343,7 +345,7 @@ void manualMove(int matrix[][MAX], int numberLocations[][MAX], int *movesIndex, 
 
 		// Check for number connections
 		if (connectedCheck(num, numberLocations)) {
-			printf("Numbers connected!\n");
+			printf("Numbers connected! Press Enter to continue...\n");
 			numberLocations[num-1][4] = 0;
 			se = 1;
 			waitForEnter();

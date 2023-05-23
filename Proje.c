@@ -381,6 +381,11 @@ void gameLoopManual(int matrix[][MAX], int numberLocations[][MAX], int *movesInd
 		{
 			case 0:
 				manualMove(matrix, numberLocations, movesIndex, listMoves, N);
+				if (isGameFinished(numberLocations, N)) {
+					clearScreen();
+					printf("Game Over, you made it!\n");
+					se = 2;
+				} // SCORE, ADD SCORES
 				break;
 
 			case 1:
@@ -422,4 +427,11 @@ void moveUndo(int matrix[][MAX], int numberLocations[][MAX], int listMoves[][MAX
 	matrix[i1][j1] = 0;
 }
 	
-	
+int isGameFinished(int numberLocations[][MAX], int N)
+{
+	int i, finished = 0;
+	for (i = 1; i <= N; i++) 
+		if (numberLocations[i][4] == 1)
+			finished = 1;
+	return finished;
+}

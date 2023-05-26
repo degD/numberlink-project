@@ -27,8 +27,9 @@ void possibleHeadsPrint(int numberLocations[][MAX], int N);
 int selectionHeadCheck(int matrix[][MAX], int i0, int j0, int numberLocations[][MAX], int N);
 int isTargetValid(int matrix[][MAX], int i0, int j0, int i1, int j1, int N);
 int boundaryCheck(int i0, int j0, int N);
+int isGameFinished(int numberLocations[][MAX], int N);
 
-
+void gamemodeAuto(int matrix[][MAX], int N);
 
 
 int main()
@@ -435,3 +436,7 @@ int isGameFinished(int numberLocations[][MAX], int N)
 			finished = 1;
 	return finished;
 }
+
+void gamemodeAuto(int matrix[][MAX], int N)
+{
+	

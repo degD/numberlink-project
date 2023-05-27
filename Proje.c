@@ -1,5 +1,5 @@
 #include<stdio.h>
-#define MAX 15
+#define MAX 50
 
 // Pre-defined
 void drawBoard(int matris[][MAX], int N);
@@ -29,7 +29,8 @@ int isTargetValid(int matrix[][MAX], int i0, int j0, int i1, int j1, int N);
 int boundaryCheck(int i0, int j0, int N);
 int isGameFinished(int numberLocations[][MAX], int N);
 
-void gamemodeAuto(int matrix[][MAX], int N);
+void gamemodeAuto(int matrix[][MAX], int numberLocations[][MAX], int N);
+int compare_routes(int all_routes[][MAX][MAX], int route_selecions[], int N);
 
 
 int main()
@@ -45,7 +46,10 @@ int main()
 
 	// Game	
 	matrixAnalysis(matrix, numberLocations, N);
-	gameLoopManual(matrix, numberLocations, &movesIndex, listMoves, N);
+
+	gamemodeAuto(matrix, numberLocations, N);
+
+	//gameLoopManual(matrix, numberLocations, &movesIndex, listMoves, N);
 //	
 //	printf("Move(m), Undo(u), Exit(e): ");
 //	scanf(" %c", &c);
@@ -277,7 +281,7 @@ int connectedCheck(int num, int numberLocations[][MAX])
 
 void clearScreen() 
 {
-	printf("\e[;H\e[J");
+	printf("\e[;H\e[J"); // THAT IS BROKEN!!
 }
 
 void waitForEnter()
@@ -408,6 +412,7 @@ void gameLoopManual(int matrix[][MAX], int numberLocations[][MAX], int *movesInd
 	} while (se != 2);
 }	
 
+// Undo a move
 void moveUndo(int matrix[][MAX], int numberLocations[][MAX], int listMoves[][MAX], int *movesIndex, int N)
 {
 	int i0, j0, i1, j1, num;
@@ -437,6 +442,188 @@ int isGameFinished(int numberLocations[][MAX], int N)
 	return finished;
 }
 
-void gamemodeAuto(int matrix[][MAX], int N)
+// Copy NxN matrix m1 to m2
+void copy_matrix(int m1[][MAX], int m2[][MAX], int N)
 {
+	int i, j;
+	for (i = 0; i < N; i++)
+		for (j = 0; j < N; j++)
+			m2[i][j] = m1[i][j];
+}
+
+// Location validation for auto game mode
+int isValidAuto(int m[][MAX], int i, int j, int num, int N)
+{
+	if (i < 0 || i >= N || j < 0 || j >= N) return 0;
+	if (m[i][j] != 0 && m[i][j] != num) return 0;
+	return 1;	
+}
+
+void printRoutes(int m[][MAX], int N)
+{
+	int i, j, c = 0, f;
+	printf("\n");
+	for (i = 0; i < N; i++) {
+
+		if (m[i][0] == 1 ) 
+		{
+			c++;
+			printf("%3d: ", c);
+			f = 0;
+			for (j = 1; j < N; j+=2) {
+				if (m[i][j] != 0) {
+					printf("(%d %d) ", m[i][j]-1, m[i][j+1]-1);
+					f = 1;
+				}
+				else if (m[i][j] == 0 && f == 0) printf("      ");
+				else break;
+			}
+			printf("\n");						
+		}
+
+	}
+}
+
+/*
+Core of the automation algorithm. Finds all possible routes for connecting a pair of numbers.
+And saves these routes to a matrix for future use. In the "routes" matrix, each row that
+starts with a "1" is a valid route. And other elements in those rows are also coordinates for
+these routes. They are sequences of (i, j), but they start from 1, rather than 0. 
+"route_counter" should be "0" and "depth" should be "1" for general usage.
+*/
+int find_save_routes(int m[][MAX], int number, int i, int j, int starti, int startj, int route_counter, int depth, int routes[][MAX], int N)
+{
+	int mc[MAX][MAX];
 	
+	routes[route_counter][depth] = i+1;
+	routes[route_counter][depth+1] = j+1;
+	
+	if ((i != starti || j != startj) && m[i][j] == number) {
+		routes[route_counter][0] = 1;
+		routes[route_counter][depth+2] = 0;
+		return route_counter+1;
+	}
+		
+	copy_matrix(m, mc, N);
+	mc[i][j] = N+1;
+	
+	if (isValidAuto(mc, i+1, j, number, N) == 1) 
+		route_counter = find_save_routes(mc, number, i+1, j, starti, startj, route_counter, depth+2, routes, N);
+
+	if (isValidAuto(mc, i-1, j, number, N) == 1) 
+		route_counter = find_save_routes(mc, number, i-1, j, starti, startj, route_counter, depth+2, routes, N);
+
+	if (isValidAuto(mc, i, j+1, number, N) == 1) 
+		route_counter = find_save_routes(mc, number, i, j+1, starti, startj, route_counter, depth+2, routes, N);
+
+	if (isValidAuto(mc, i, j-1, number, N) == 1) 
+		route_counter = find_save_routes(mc, number, i, j-1, starti, startj, route_counter, depth+2, routes, N);
+
+	return route_counter;
+}
+
+/*
+Routes do branch, and those branches begin with empty cells before their branching points.
+This function fixes this problem.
+*/
+void fill_blanks_in_routes(int routes[][MAX])
+{
+	int i = 1, j;
+	
+	while (routes[i][0] != 0) {
+		j = 1;
+		while (routes[i][j] == 0) {
+			routes[i][j] = routes[i-1][j];
+			j++;
+		}
+		i++;
+	}
+}
+
+int count_routes(int routes[][MAX])
+{
+	int i = 0;
+	while (routes[i++][0] == 1);
+	return i-1;
+}
+
+void gamemodeAuto(int matrix[][MAX], int numberLocations[][MAX], int N)
+{
+	int n, all_routes[MAX][MAX][MAX] = {{0}};
+	int route_selections[MAX] = {0}, route_numbers[MAX];
+	int c = 0, total = 1;
+
+	// Generating the routes
+	for (n = 0; n < N; n++) {
+		find_save_routes(matrix, n+1, numberLocations[n][0], numberLocations[n][1], numberLocations[n][0], numberLocations[n][1], 0, 1, all_routes[n], N);
+		fill_blanks_in_routes(all_routes[n]);
+		route_numbers[n] = count_routes(all_routes[n]);
+		total *= route_numbers[n];
+		printf("--%d--(%d)--(%d)--", n+1, route_numbers[n], total);
+		printRoutes(all_routes[n], MAX);	
+		printf("\n");
+	}
+		
+	// Testing the routes to find a valid solution
+	while (c++ < total) 
+	{
+		if (compare_routes(all_routes, route_selections, N) == 1) {
+			printf("FOUND YOU!\n");
+			printf("->[%d,%d,%d,%d,%d]\n", route_selections[0]+1, route_selections[1]+1, route_selections[2]+1, route_selections[3]+1, route_selections[4]+1);
+		}
+
+		route_selections[0]++;
+		for (n = 0; n < N-1; n++) {
+			if (route_selections[n] == route_numbers[n]) {
+				route_selections[n] = 0;
+				route_selections[n+1]++;
+			}
+		}
+	}	
+}
+
+int compare_routes(int all_routes[][MAX][MAX], int route_selecions[], int N)
+{
+	int number = 0;
+	int i0, j0;
+	int depth, *route, *testroute;
+	int n, d, i, j, exist = 0;
+
+	while (number < N-1 && exist == 0)
+	{
+		route = all_routes[number][route_selecions[number]];
+		depth = 1;
+		exist = 0;
+
+		while (route[depth] != 0 && exist == 0) 
+		{
+			i0 = route[depth];
+			j0 = route[depth+1];
+
+			exist = 0;
+			n = number + 1;
+			while (n < N && exist == 0) {
+				testroute = all_routes[n][route_selecions[n]];
+				d = 1;
+				while (testroute[d] != 0 && exist == 0) {
+					i = testroute[d];
+					j = testroute[d+1];
+					d += 2;
+					if (i == i0 && j == j0) exist = 1;
+				}
+				
+				n++;
+			}
+
+			depth += 2;
+		}
+
+		number++;
+	}
+
+	if (exist == 0)
+		return 1;
+	else 
+		return 0;
+}
+

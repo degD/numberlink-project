@@ -11,10 +11,10 @@ void fill_blanks_in_routes(int **routes);
 int main()
 {
 	int j = 0, N = 4, **routes;
-	int matrix[MAX][MAX] = {{2, 0, 0, 0},
+	int matrix[MAX][MAX] = {{1, 0, 0, 0},
 		 					{0, 0, 0, 0},
-		 					{0, 0, 0, 0},
-		 					{0, 0, 0, 2}};
+		 					{0, 3, 4, 0},
+		 					{0, 0, 0, 1}};
 		 					
 	routes = (int**) calloc(1000, sizeof(int*));
 	for (j = 0; j < 1000; j++)
@@ -49,11 +49,11 @@ int count_routes(int m[][MAX], int i, int j, int si, int sj, int N)
 {
 	int mc[MAX][MAX], r[4] = {0};
 	
-	if (i != si && j != sj && m[i][j] == 2)
+	if ((i != si || j != sj) && m[i][j] == 1)
 		return 1;
 		
 	copy_matrix(m, mc, N);
-	mc[i][j] = 1;
+	mc[i][j] = N+1;
 	
 	if (isBlocked(mc, i+1, j, N) == 0) 
 		r[0] = count_routes(mc, i+1, j, si, sj, N);
@@ -73,7 +73,7 @@ int count_routes(int m[][MAX], int i, int j, int si, int sj, int N)
 int isBlocked(int m[][MAX], int i, int j, int N)
 {
 	if (i < 0 || i >= N || j < 0 || j >= N) return 1;
-	if (m[i][j] != 0 && m[i][j] != 2) return 1;
+	if (m[i][j] != 0 && m[i][j] != 1) return 1;
 	return 0;
 }
 
@@ -84,16 +84,14 @@ int find_save_routes(int m[][MAX], int i, int j, int si, int sj, int rc, int dep
 	routes[rc][depth] = i+1;
 	routes[rc][depth+1] = j+1;
 	
-//	printf("<<i = %2d, j = %2d; %2d, %2d>>\n", i, j, depth/2, rc);
-	
-	if (i != si && j != sj && m[i][j] == 2) {
+	if ((i != si || j != sj) && m[i][j] == 1) {
 		routes[rc][0] = 1;
 		routes[rc][depth+2] = 0;
 		return rc+1;
 	}
 		
 	copy_matrix(m, mc, N);
-	mc[i][j] = 1;
+	mc[i][j] = N+1;
 	
 	if (isBlocked(mc, i+1, j, N) == 0) 
 		rc = find_save_routes(mc, i+1, j, si, sj, rc, depth+2, routes, N);
